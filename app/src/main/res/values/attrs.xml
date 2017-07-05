@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="Timeline">
+        <attr name="orientation">
+            <enum name="landscape" value="0"/>
+            <enum name="portrait" value="1"/>
+        </attr>
+        <attr name="scrollMode">
+            <enum name="in_day" value="0"/>
+            <enum name="out_day" value="1"/>
+        </attr>
+    </declare-styleable>
+</resources>

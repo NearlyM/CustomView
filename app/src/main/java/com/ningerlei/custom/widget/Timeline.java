@@ -129,7 +129,7 @@ public class Timeline extends View{
         if (widthSpecMode == MeasureSpec.AT_MOST && heightSpecMode == MeasureSpec.AT_MOST) {
             setMeasuredDimension(mWidth, mHeight);
         } else if (widthSpecMode == MeasureSpec.AT_MOST) {
-            setMeasuredDimension(mWidth, heightSpecSize);
+            setMeasuredDimension(mWidth, heightSpecSize * 4);
         } else if (heightSpecMode == MeasureSpec.AT_MOST) {
             setMeasuredDimension(widthSpecSize, mHeight);
         }
@@ -243,11 +243,11 @@ public class Timeline extends View{
     }
 
     private void smoothScrollToInY(int deltaY, int duration){
-        base += deltaY;
-        if (base > 0){
-            base = 0;
-            return;
-        }
+//        base += deltaY;
+//        if (base > 0){
+//            base = 0;
+//            return;
+//        }
         int scrollY = getScrollY();
         scroller.startScroll(0, scrollY, 0, -deltaY, duration);
         invalidate();

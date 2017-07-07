@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/swip"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="220dp">
+
+        <com.ningerlei.custom.widget.TimeScrollView
+            android:id="@+id/scrollview"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:scrollbars="none"
+            android:background="@android:color/white"
+            android:fillViewport="true"
+            >
+
+        </com.ningerlei.custom.widget.TimeScrollView>
+    </android.support.v4.widget.SwipeRefreshLayout>
+
+
+    <com.ningerlei.custom.widget.TimePointer
+        android:id="@+id/timehandle"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="220dp"
+        android:text="12222" />
+
+</RelativeLayout>

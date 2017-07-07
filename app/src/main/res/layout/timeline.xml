@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.ningerlei.custom.widget.TimelineAbs
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/timeline"
+    android:layout_width="match_parent"
+    android:layout_height="620dp"
+    android:paddingTop="20dp"
+    app:orientation="portrait"
+    app:scrollMode="in_day"/>

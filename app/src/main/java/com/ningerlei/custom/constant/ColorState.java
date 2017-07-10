@@ -1,5 +1,7 @@
 package com.ningerlei.custom.constant;
 
+import com.ningerlei.custom.R;
+
 /**
  * Description :
  * CreateTime : 2017/7/6 18:06
@@ -12,5 +14,16 @@ package com.ningerlei.custom.constant;
  */
 
 public enum ColorState {
-    SOUND, MOTION, NORMAL
+
+    SOUND(R.color.colorBlue), MOTION(R.color.colorGreen), NORMAL(R.color.colorWhite);
+
+    int color;
+
+    ColorState(int color){
+        this.color = color;
+    }
+
+    public int getColorRes() {
+        return color;
+    }
 }

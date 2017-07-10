@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        timeScrollView.setOnRefreshChange(new TimeScrollView.OnRefreshListener() {
+        timeScrollView.setOnRefreshChange(new TimeScrollView.OnRefreshStateListener() {
             @Override
             public void onRefresh() {
                 swipeRefreshLayout.setRefreshing(true);
@@ -87,6 +87,6 @@ public class MainActivity extends AppCompatActivity {
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
-        timeScrollView.startScroller();
+//        timeScrollView.startScroller();
     }
 }

@@ -9,7 +9,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -17,9 +16,11 @@ import android.view.View;
 
 import com.ningerlei.custom.R;
 import com.ningerlei.custom.constant.ColorState;
+import com.ningerlei.custom.entity.TimeData;
 import com.ningerlei.custom.util.DensityUtil;
 
 import java.util.Calendar;
+import java.util.List;
 
 /**
  * Description :
@@ -36,7 +37,7 @@ public class TimelineAbs extends View{
 
     private final String TAG = Timeline.class.getSimpleName();
 
-    private final int WIDTH_DEFAULT_PORTRAIT= 500;
+    private final int WIDTH_DEFAULT_PORTRAIT= 100;
     private final int HEIGHT_DEFAULT_LANDSCAPE = 50;
     private final int UNIT = 6; // min 时间刻度间隔
 
@@ -76,9 +77,15 @@ public class TimelineAbs extends View{
 
     float step; //刻度尺上的最小间隔
 
-    float page = 4.0f;  //时间轴占的屏幕页数
+    float page = 4.0f * 7;  //时间轴占的屏幕页数
 
     float totalTime = 24 * 60 * 60; //时间轴上显示的总时间 s
+
+    List<TimeData> timeDataList;
+
+    public void setTimeDataList(List<TimeData> timeDataList) {
+        this.timeDataList = timeDataList;
+    }
 
     public float getStep() {
         return step;
@@ -90,6 +97,7 @@ public class TimelineAbs extends View{
 
     public void setVisualLength(int visualLength) {
         markTotalLength = getHeight() - (DensityUtil.dp2px(getContext(), getResources().getConfiguration().screenHeightDp) - visualLength);
+        Log.d(TAG, "markTotalLength = " + markTotalLength);
         step = (float) markTotalLength / (60 * page);
 //        step = 33.75f;
     }
@@ -211,18 +219,16 @@ public class TimelineAbs extends View{
      * @param state
      */
     private void drawColor(Canvas canvas, Rect rect, ColorState state) {
-        switch (state){
-            case MOTION:
-                cPaint.setColor(Color.GREEN);
-                break;
-            case NORMAL:
-                cPaint.setColor(getResources().getColor(R.color.colorWhite));
-                break;
-            case SOUND:
-                cPaint.setColor(getResources().getColor(R.color.colorBlue));
-                break;
-        }
+        cPaint.setColor(getResources().getColor(state.getColorRes()));
         canvas.drawRect(rect, cPaint);
+    }
+
+    private void drawColor(Canvas canvas) {
+        if (timeDataList != null){
+            for (TimeData timeData : timeDataList) {
+
+            }
+        }
     }
 
     /**
@@ -272,20 +278,23 @@ public class TimelineAbs extends View{
             rect.set(colorLeft + colorPaddingDp, (int) startY, colorLeft + colorWidthDp - colorPaddingDp, (int) (startY + step));
             if (count % 10 == 0) {
                 canvas.drawLine(getWidth(), startY, getWidth() - DensityUtil.dp2px(getContext(), lMarkH), startY,  lMPaint);
-                canvas.drawText("" + (/*24 - */count / 10), textLeft, startY + DensityUtil.dp2px(getContext(), textSize) / 3, tMPaint);
+                canvas.drawText("" + (/*24 - */count / 10 % 24), textLeft, startY + DensityUtil.dp2px(getContext(), textSize) / 3, tMPaint);
                 drawColor(canvas, rect, ColorState.NORMAL);
-                if (count % 20 == 0) {
-                    canvas.drawBitmap(bitmap, getWidth() - DensityUtil.dp2px(getContext(), lMarkH * 13), (int) startY, cPaint);
-                }
+//                if (count % 20 == 0) {
+//                    canvas.drawBitmap(bitmap, getWidth() - DensityUtil.dp2px(getContext(), lMarkH * 13), (int) startY, cPaint);
+                    if (onAddImageCallback != null){
+                        onAddImageCallback.onAddImage(getWidth() - DensityUtil.dp2px(getContext(), lMarkH * 13), (int) startY);
+                    }
+//                }
             } else {
                 canvas.drawLine(getWidth(), startY, getWidth() - DensityUtil.dp2px(getContext(), sMarkH), startY,  sMPaint);
                 if (count % 9 > 5){
                     drawColor(canvas, rect, ColorState.MOTION);
-                    canvas.drawCircle(colorLeft + colorWidthDp / 2, startY, colorWidthDp / 2, cPaint);
+                    canvas.drawCircle(colorLeft + colorWidthDp / 2, startY - step, colorWidthDp / 2, cPaint);
                     canvas.drawCircle(colorLeft + colorWidthDp / 2, startY + step, colorWidthDp / 2, cPaint);
                 } else if (count % 9 < 4 && count % 9 > 1){
                     drawColor(canvas, rect, ColorState.SOUND);
-                    canvas.drawCircle(colorLeft + colorWidthDp / 2, startY, colorWidthDp / 2, cPaint);
+                    canvas.drawCircle(colorLeft + colorWidthDp / 2, startY - step, colorWidthDp / 2, cPaint);
                     canvas.drawCircle(colorLeft + colorWidthDp / 2, startY + step, colorWidthDp / 2, cPaint);
                 } else {
                     drawColor(canvas, rect, ColorState.NORMAL);
@@ -312,5 +321,15 @@ public class TimelineAbs extends View{
 
     public OrientationMode getOrientationMode() {
         return orientationMode;
+    }
+
+    OnAddImageCallback onAddImageCallback;
+
+    public void setOnAddImageCallback(OnAddImageCallback onAddImageCallback) {
+        this.onAddImageCallback = onAddImageCallback;
+    }
+
+    public interface OnAddImageCallback{
+        void onAddImage(float left, float top);
     }
 }

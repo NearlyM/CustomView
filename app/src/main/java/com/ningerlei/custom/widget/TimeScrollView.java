@@ -2,6 +2,7 @@ package com.ningerlei.custom.widget;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
@@ -9,12 +10,14 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 
 import com.ningerlei.custom.R;
 import com.ningerlei.custom.util.ContextUtil;
+import com.ningerlei.custom.util.DateTimeUtil;
 import com.ningerlei.custom.util.DensityUtil;
 
 import java.util.Calendar;
@@ -30,7 +33,7 @@ import java.util.Calendar;
  * @ModifyDescription :
  */
 
-public class TimeScrollView extends ScrollView {
+public class TimeScrollView extends ScrollView implements TimelineAbs.OnAddImageCallback{
 
     private static final String TAG = TimeScrollView.class.getSimpleName();
     // 检查ScrollView的最终状态
@@ -43,6 +46,9 @@ public class TimeScrollView extends ScrollView {
     private int lastT = 0;
 
     LinearLayout linearLayout;
+
+    RelativeLayout relativeLayout;
+
     TimelineAbs timelineAbs;
 
     public TimeScrollView(Context context) {
@@ -56,8 +62,16 @@ public class TimeScrollView extends ScrollView {
 
     private void initView(Context context) {
 
+        relativeLayout = new RelativeLayout(context);
+        ViewGroup.LayoutParams param0 = new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        relativeLayout.setLayoutParams(param0);
+        relativeLayout.setBackgroundColor(Color.WHITE);
+
+
         linearLayout = new LinearLayout(context);
-        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        linearLayout.setOrientation(LinearLayout.HORIZONTAL);
         ViewGroup.LayoutParams param = new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -74,8 +88,12 @@ public class TimeScrollView extends ScrollView {
         param1.height = DensityUtil.dp2px(context, getResources().getConfiguration().screenHeightDp);
         timelineAbs.setLayoutParams(param1);
 
+        linearLayout.addView(relativeLayout);
         linearLayout.addView(timelineAbs);
         addView(linearLayout);
+
+
+        timelineAbs.setOnAddImageCallback(this);
     }
 
     @Override
@@ -86,9 +104,21 @@ public class TimeScrollView extends ScrollView {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        timelineAbs.setVisualLength(getTop());
-        setTime(System.currentTimeMillis());
+        int location[] = new int[2];
+        getLocationOnScreen(location);
+        timelineAbs.setVisualLength(location[1] - getStatusBarHeight());
+        Log.d(TAG, "top = " + location[1]);
+//        setTime(System.currentTimeMillis());
 
+    }
+
+    public int getStatusBarHeight(){
+        int statusBarHeight = 0;
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            statusBarHeight = getResources().getDimensionPixelSize(resourceId);
+        }
+        return statusBarHeight;
     }
 
     public void setTime(long timestamp){
@@ -110,7 +140,7 @@ public class TimeScrollView extends ScrollView {
         }
     }
 
-    int offset = 24 * 60 * 60;
+    long offset = 24 * 60 * 60 * 7;
     int offsetDp;
     boolean hasScroll;
 
@@ -149,36 +179,37 @@ public class TimeScrollView extends ScrollView {
             return;
         }
 
-        if (!isAutoScroller && t < offsetDp){
+        if (!isAutoScroller && t < offsetDp) {
             scrollBy(0, offsetDp - t);
             return;
         }
 
         int timelineLength = timelineAbs.getMarkTotalLength();
 
-        int secondTotal = offset  * t / timelineLength;
+        long secondTotal = offset  * t / timelineLength;
 
-        int current = offset - secondTotal;
-
-        int hour = current / 3600;
-        int minute = (current % 3600) / 60;
-        int second = (current % 3600) % 60;
+        long current = offset - secondTotal;
 
         if (onTimeChage != null){
-            onTimeChage.timeChange(hour + ":" + minute + ":" + second);
+            onTimeChage.timeChange(DateTimeUtil.getTime(current));
         }
 
         if (inTouch) {
             if (t != oldt) {
                 // 有手指触摸，并且位置有滚动
                 Log.i(TAG, "SCROLL_STATE_TOUCH_SCROLL");
+                scrollerState = OnScrollListener.SCROLL_STATE_TOUCH_SCROLL;
                 onScrollListener.onScrollStateChanged(this,
                         OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
+                if (onRefreshChange != null){
+                    onRefreshChange.onRefreshStop();
+                }
             }
         } else {
             if (t != oldt) {
                 // 没有手指触摸，并且位置有滚动，就可以简单的认为是在fling
                 Log.w(TAG, "SCROLL_STATE_FLING");
+                scrollerState = OnScrollListener.SCROLL_STATE_FLING;
                 onScrollListener.onScrollStateChanged(this,
                         OnScrollListener.SCROLL_STATE_FLING);
                 // 记住上次滑动的最后位置
@@ -190,17 +221,13 @@ public class TimeScrollView extends ScrollView {
         onScrollListener.onScrollChanged(l, t, oldl, oldt);
     }
 
-    private void pullToRefresh() {
-        ProgressBar progressBar = new ProgressBar(getContext());
-
-    }
-
     private Handler checkStateHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             if (lastT == getScrollY()) {
                 // 如果上次的位置和当前的位置相同，可认为是在空闲状态
                 Log.e(TAG, "SCROLL_STATE_IDLE");
+                scrollerState = OnScrollListener.SCROLL_STATE_IDLE;
                 onScrollListener.onScrollStateChanged(TimeScrollView.this,
                         OnScrollListener.SCROLL_STATE_IDLE);
                 if (lastT == 0) {
@@ -213,6 +240,26 @@ public class TimeScrollView extends ScrollView {
             }
         }
     };
+
+    int scrollerState;
+
+    @Override
+    public void onAddImage(float left, float top) {
+        left = 700;
+        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        ImageView imageView = new ImageView(getContext());
+        imageView.setLayoutParams(layoutParams);
+        imageView.setX(left);
+        imageView.setY(top);
+        Log.d(TAG, "x = " + left + "; y = " + top);
+        imageView.setImageResource(R.drawable.ss);
+//        linearLayout.addView(imageView);
+
+        ImageView logo = new ImageView(getContext());
+
+
+        relativeLayout.addView(imageView);
+    }
 
     /**
      * 滚动监听事件
@@ -276,13 +323,13 @@ public class TimeScrollView extends ScrollView {
         void timeChange(String time);
     }
 
-    OnRefreshListener onRefreshChange;
+    OnRefreshStateListener onRefreshChange;
 
-    public void setOnRefreshChange(OnRefreshListener onRefreshChange) {
+    public void setOnRefreshChange(OnRefreshStateListener onRefreshChange) {
         this.onRefreshChange = onRefreshChange;
     }
 
-    public interface OnRefreshListener {
+    public interface OnRefreshStateListener {
         void onRefresh();
         void onRefreshStop();
     }

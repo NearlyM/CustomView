@@ -1,92 +1,80 @@
 package com.ningerlei.custom;
 
+import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Handler;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.widget.ScrollView;
+import android.view.View;
+import android.widget.Button;
 
-import com.ningerlei.custom.widget.TimePointer;
-import com.ningerlei.custom.widget.TimeScrollView;
+import com.ningerlei.timeline.constant.ColorType;
+import com.ningerlei.timeline.entity.TimeData;
+import com.ningerlei.timeline.widget.TimelineScrollView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private final String TAG = MainActivity.class.getSimpleName();
 
-    TimeScrollView timeScrollView;
-    TimePointer timeHand;
-
-    SwipeRefreshLayout swipeRefreshLayout;
+    TimelineScrollView timelineScrollView, timelineScrollViewLand;
+    Button button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_main);
-
         setContentView(R.layout.activity_main_scrollerview);
+        timelineScrollView = (TimelineScrollView) findViewById(R.id.scrollview);
+        timelineScrollViewLand = (TimelineScrollView) findViewById(R.id.action0);
 
-        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swip);
+        startTime = 1500279402000l;
+        initData();
+        timelineScrollView.setDataList(timeDatas);
 
-        swipeRefreshLayout.setColorSchemeColors(getResources().getColor(android.R.color.holo_blue_light),
-                getResources().getColor(android.R.color.holo_orange_light),
-                getResources().getColor(android.R.color.holo_green_light));
+        timelineScrollViewLand.setDataList(timeDatas);
 
-        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        button = (Button) findViewById(R.id.top);
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onRefresh() {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        swipeRefreshLayout.setRefreshing(false);
-                    }
-                }, 2000);
+            public void onClick(View v) {
+                startTime -=  24 * 60 * 60 * 1000 * 1;
+                initData();
+                timelineScrollView.setDataList(timeDatas);
+//                timelineScrollView.setTime(1500279402000l - 24 * 60 * 60 * 1000 * 1);
             }
         });
+    }
 
-        timeScrollView = (TimeScrollView) findViewById(R.id.scrollview);
-        timeHand = (TimePointer) findViewById(R.id.timehandle);
-        timeScrollView.setOnScrollListener(new TimeScrollView.OnScrollListener() {
-            @Override
-            public void onTopArrived() {
-                Log.d(TAG, "onTopArrived");
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            timelineScrollViewLand.setVisibility(View.VISIBLE);
+            timelineScrollView.setVisibility(View.GONE);
+        }else {
+            timelineScrollViewLand.setVisibility(View.GONE);
+            timelineScrollView.setVisibility(View.VISIBLE);
+        }
+    }
 
+    List<TimeData> timeDatas = new ArrayList<TimeData>();
+    long startTime;
+    private void initData() {
+
+        for (int i = 0; i < 10; i++){
+            TimeData timeData = new TimeData();
+            if (i % 2 == 0){
+                timeData.setColorType(ColorType.MOTION);
+            }else if (i % 2 == 1){
+                timeData.setColorType(ColorType.SOUND);
             }
+            timeData.setStartTime(startTime);
+            timeData.setOffset(1000 * 60 * 6 * 3);
+            startTime = startTime - 2000000;
+//            timeData.setStartTime(1499920654960l - 1000 * 60 * 60 * i);
+//            timeData.setOffset(1000 * 60 * 60);
+            timeDatas.add(timeData);
+        }
 
-            @Override
-            public void onBottomArrived() {
-
-            }
-
-            @Override
-            public void onScrollStateChanged(ScrollView view, int scrollState) {
-
-            }
-
-            @Override
-            public void onScrollChanged(int l, int t, int oldl, int oldt) {
-
-            }
-        });
-
-        timeScrollView.setOnTimeChage(new TimeScrollView.OnTimeChange() {
-            @Override
-            public void timeChange(String time) {
-                timeHand.setText(time);
-            }
-        });
-
-        timeScrollView.setOnRefreshChange(new TimeScrollView.OnRefreshStateListener() {
-            @Override
-            public void onRefresh() {
-                swipeRefreshLayout.setRefreshing(true);
-            }
-
-            @Override
-            public void onRefreshStop() {
-                swipeRefreshLayout.setRefreshing(false);
-            }
-        });
-//        timeScrollView.startScroller();
     }
 }
